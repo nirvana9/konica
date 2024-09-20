@@ -47,7 +47,9 @@ class CL200A(object):
         cmd_response = CL200A_utils.cmd_formatter(self.cmd_dict['command_54r'])
 
         for i in range(2):
+            print("==================__connection start===============")
             CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd_request, sleep_time=0.5)
+            print("==================__connection end===============")
             pc_connected_mode = self.ser.readline().decode('ascii')
             self.ser.reset_input_buffer()
             self.ser.reset_output_buffer()
@@ -72,7 +74,9 @@ class CL200A(object):
         # Hold status
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
+        print("==================__hold_mode start===============")
         CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd, sleep_time=0.5)
+        print("==================__hold_mode end===============")
 
     def __ext_mode(self):
         """
@@ -87,7 +91,9 @@ class CL200A(object):
 
         for i in range(2):
             # set CL-200A to EXT mode
+            print("==================__ext_mode start===============")
             CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd, sleep_time=0.125)
+            print("==================__ext_mode end===============")
             ext_mode_err = self.ser.readline().decode('ascii')
             # If an error occurred when setting EXT mode (ERR byte = "4"), hold_mode was not completed
             # correctly. Repeat hold_mode and then set EXT mode again.
@@ -96,7 +102,7 @@ class CL200A(object):
                 continue
             elif ext_mode_err[6:7] in ['1', '2', '3']:
                 logs.logger.error('Set hold mode error')
-                err = "Switch off the CL-200A and then switch it back on"
+                err = "Switch off the CL-200Axx and then switch it back on"
                 logs.logger.info(err)
                 raise ConnectionError(err)
             else:
@@ -110,9 +116,13 @@ class CL200A(object):
         # Perform measurement
         cmd_ext = CL200A_utils.cmd_formatter(self.cmd_dict['command_40r'])
         cmd_read = CL200A_utils.cmd_formatter(read_cmd)
+        print("==================perform_measurement 1 start===============")
         CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd_ext, sleep_time=0.5)
+        print("==================perform_measurement 1 end===============")
         # read data
+        print("==================perform_measurement 2 start===============")
         CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd_read, sleep_time=0)
+        print("==================perform_measurement 2 end===============")
         try:
             serial_ret = self.ser.readline()
             if not len(serial_ret):
@@ -154,59 +164,6 @@ class CL200A(object):
                 logs.logger.debug(f"result: {result}")
             return -1
 
-    # Read measurement data (X, Y, Z)                   01
-    def get_xyz(self) -> tuple:
-        try:
-            result = self.perform_measurement(self.cmd_dict['command_01'])
-            # Convert Measurement
-            x = float(result[10:14])/10
-            y = float(result[16:20])/10
-            z = float(result[22:26])/10
-            # sth = result[27:-1]
-            # multiply = result[7:9]
-
-            if DEBUG:
-                logs.logger.debug(f"X: {x}, Y: {y}, Z: {z}")
-
-            return x, y, z
-        except IndexError as err:
-            logs.logger.debug(f"result: {result}")
-            raise ValueError(err)
-        except ValueError as err:
-            if DEBUG:
-                logs.logger.error(err)
-                logs.logger.debug(f"result: {result}")
-            return -1, -1, -1
-
-    # Read measurement data (EV, TCP, Δuv)              08
-    def get_delta_uv(self) -> tuple:
-        '''
-        Return:
-             lux, tcp, delta_uv
-        '''
-        try:
-            result = self.perform_measurement(self.cmd_dict['command_08'])
-            # Convert Measurement
-            # Calc lux
-            lux = CL200A_utils.calc_lux(result)
-
-            tcp = float(result[16:20]) / 10
-            delta_uv = float(result[22:26]) / 10
-
-            if DEBUG:
-                logs.logger.debug(f"Illuminance: {lux} lux, TCP: {tcp}, DeltaUV: {delta_uv}")
-
-            return lux, tcp, delta_uv
-        except IndexError as err:
-            logs.logger.debug(f"result: {result}")
-            raise ValueError(err)
-        except ValueError as err:
-            if DEBUG:
-                logs.logger.error(err)
-                logs.logger.debug(f"result: {result}")
-            return -1, -1, -1
-
-
 if __name__ == "__main__":
     try:
         luxmeter = CL200A()
@@ -218,7 +175,9 @@ if __name__ == "__main__":
 
     while True:
         # curr_lux = luxmeter.get_lux()
+        sleep(1)
         luxmeter.get_lux()
+        sleep(1)
         # print(luxmeter.get_xyz())
         # test_suite = ["me_mccamy", "Hernandez 1999"]
         #

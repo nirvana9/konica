@@ -48,10 +48,14 @@ def connection_konica(ser) -> bool:
     logs.logger.info("Setting CL-200A to PC connection mode")
     # cmd_request = utils.cmd_formatter(self.cl200a_cmd_dict['command_54'])
     cmd_request = chr(2) + '00541   ' + chr(3) + '13\r\n'
+
+    print(f"cmd_request == {cmd_request}")
     cmd_response = cmd_formatter(cl200a_cmd_dict['command_54r'])
     return_connection = None
     for i in range(2):
+        print("==================connection_konica start===============")
         write_serial_port(ser=ser, cmd=cmd_request, sleep_time=0.5)
+        print("==================connection_konica end===============")
         try:
             ser_read = ser.readline()
         except SerialException as e:
@@ -136,6 +140,9 @@ def cmd_formatter(cmd) -> str:
     bcc = str(j).zfill(2)
     return stx + cmd + etx + bcc + delimiter
 
+def string_to_hex(s):
+    return ''.join(format(ord(c), '02x') for c in s)
+
 
 def write_serial_port(ser, cmd, sleep_time, obj=None) -> None:
     """
@@ -148,6 +155,8 @@ def write_serial_port(ser, cmd, sleep_time, obj=None) -> None:
     """
     try:
         ser.write(cmd.encode())
+        result = string_to_hex(cmd)
+        print(f" write_serial_port  result == {result}")
     except SerialException:
         if obj:
             obj.isAlive = False
@@ -160,8 +169,9 @@ def write_serial_port(ser, cmd, sleep_time, obj=None) -> None:
 
 def check_measurement(result) -> None:
     if result[6] in ['1', '2', '3']:
-        err = 'Switch off the CL-200A and then switch it back on'
+        err = 'Switch off the CL-200Acc and then switch it back on'
         logs.logger.error(f'Error {err}')
+        logs.logger.error(f'====result6======= {result[6]}')
         #raise ConnectionResetError(err)
     if result[6] == '5':
         logs.logger.error('Measurement value over error. The measurement exceed the CL-200A measurement range.')
@@ -183,11 +193,16 @@ def calc_lux(result) -> float:
         signal = 1
     else:
         signal = -1
-    lux_num = float(result[10:14])
-    lux_pow = float(result[14]) - 4
+    #lux_num = float(result[10:14])
+    #lux_pow = float(result[14]) - 4
+
+    print(f"result == {result}")
 
     # lux = float(signal * lux_num * (10 ** lux_pow))
-    lux = round(float(signal * lux_num * (10 ** lux_pow)), 3)
+
+    #lux = round(float(signal * lux_num * (10 ** lux_pow)), 3)
+
+    lux = 0
 
     return lux
 
