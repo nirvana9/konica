@@ -5,6 +5,7 @@ from serial import PARITY_EVEN, SEVENBITS, SerialException
 import logs
 import CL200A_utils
 
+import datetime
 SKIP_CHECK_LIST = True
 DEBUG = True
 
@@ -47,9 +48,9 @@ class CL200A(object):
         cmd_response = CL200A_utils.cmd_formatter(self.cmd_dict['command_54r'])
 
         for i in range(2):
-            print("==================__connection start===============")
+            #print("==================__connection start===============")
             CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd_request, sleep_time=0.5)
-            print("==================__connection end===============")
+            #print("==================__connection end===============")
             pc_connected_mode = self.ser.readline().decode('ascii')
             self.ser.reset_input_buffer()
             self.ser.reset_output_buffer()
@@ -74,9 +75,9 @@ class CL200A(object):
         # Hold status
         self.ser.reset_input_buffer()
         self.ser.reset_output_buffer()
-        print("==================__hold_mode start===============")
+        #print("==================__hold_mode start===============")
         CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd, sleep_time=0.5)
-        print("==================__hold_mode end===============")
+        #print("==================__hold_mode end===============")
 
     def __ext_mode(self):
         """
@@ -91,9 +92,9 @@ class CL200A(object):
 
         for i in range(2):
             # set CL-200A to EXT mode
-            print("==================__ext_mode start===============")
+            #print("==================__ext_mode start===============")
             CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd, sleep_time=0.125)
-            print("==================__ext_mode end===============")
+            #print("==================__ext_mode end===============")
             ext_mode_err = self.ser.readline().decode('ascii')
             # If an error occurred when setting EXT mode (ERR byte = "4"), hold_mode was not completed
             # correctly. Repeat hold_mode and then set EXT mode again.
@@ -116,13 +117,13 @@ class CL200A(object):
         # Perform measurement
         cmd_ext = CL200A_utils.cmd_formatter(self.cmd_dict['command_40r'])
         cmd_read = CL200A_utils.cmd_formatter(read_cmd)
-        print("==================perform_measurement 1 start===============")
+        #print("==================perform_measurement 1 start===============")
         CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd_ext, sleep_time=0.5)
-        print("==================perform_measurement 1 end===============")
+        #print("==================perform_measurement 1 end===============")
         # read data
-        print("==================perform_measurement 2 start===============")
+        #print("==================perform_measurement 2 start===============")
         CL200A_utils.write_serial_port(obj=self, ser=self.ser, cmd=cmd_read, sleep_time=0)
-        print("==================perform_measurement 2 end===============")
+        #print("==================perform_measurement 2 end===============")
         try:
             serial_ret = self.ser.readline()
             if not len(serial_ret):
@@ -135,8 +136,9 @@ class CL200A(object):
 
         CL200A_utils.check_measurement(result)
 
-        if DEBUG:
-            logs.logger.debug(f"Got raw data: {result.rstrip()}")
+        #print(f"result == {result.rstrip()}")
+        #if DEBUG:
+        #    logs.logger.debug(f": {result.rstrip()}")
 
         return result
 
@@ -150,9 +152,15 @@ class CL200A(object):
 
             # Convert Measurement
             lux = CL200A_utils.calc_lux(result)
+            global start_time
 
-            if DEBUG:
-                logs.logger.debug(f"Returning {lux} luxes")
+            current_time = datetime.datetime.now()
+
+
+            print(f"result time: {(current_time - start_time).seconds} == {result.rstrip()}")
+
+            #if DEBUG:
+            #    logs.logger.debug(f"Returning {lux} luxes")
 
             return lux
         except IndexError as err:
@@ -165,6 +173,8 @@ class CL200A(object):
             return -1
 
 if __name__ == "__main__":
+    global start_time
+    start_time = datetime.datetime.now()
     try:
         luxmeter = CL200A()
     except Exception as e:

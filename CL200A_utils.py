@@ -49,13 +49,13 @@ def connection_konica(ser) -> bool:
     # cmd_request = utils.cmd_formatter(self.cl200a_cmd_dict['command_54'])
     cmd_request = chr(2) + '00541   ' + chr(3) + '13\r\n'
 
-    print(f"cmd_request == {cmd_request}")
+    #print(f"cmd_request == {cmd_request}")
     cmd_response = cmd_formatter(cl200a_cmd_dict['command_54r'])
     return_connection = None
     for i in range(2):
-        print("==================connection_konica start===============")
+        #print("==================connection_konica start===============")
         write_serial_port(ser=ser, cmd=cmd_request, sleep_time=0.5)
-        print("==================connection_konica end===============")
+        #print("==================connection_konica end===============")
         try:
             ser_read = ser.readline()
         except SerialException as e:
@@ -136,8 +136,11 @@ def cmd_formatter(cmd) -> str:
     delimiter = '\r\n'
     to_hex = ([hex(ord(c)) for c in cmd + etx])
     for i in to_hex:
+        #print(f"i = {i}")
         j ^= int(i, base=16)
+        #print(f"j = {j}")
     bcc = str(j).zfill(2)
+    #print(f"bcc = {bcc}")
     return stx + cmd + etx + bcc + delimiter
 
 def string_to_hex(s):
@@ -156,7 +159,7 @@ def write_serial_port(ser, cmd, sleep_time, obj=None) -> None:
     try:
         ser.write(cmd.encode())
         result = string_to_hex(cmd)
-        print(f" write_serial_port  result == {result}")
+        #print(f" write_serial_port  result == {result}")
     except SerialException:
         if obj:
             obj.isAlive = False
@@ -196,7 +199,7 @@ def calc_lux(result) -> float:
     #lux_num = float(result[10:14])
     #lux_pow = float(result[14]) - 4
 
-    print(f"result == {result}")
+    #print(f"result == {result}")
 
     # lux = float(signal * lux_num * (10 ** lux_pow))
 
